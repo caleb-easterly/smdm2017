@@ -9,7 +9,7 @@ library(rootSolve)
 library(beepr)
 library(microbenchmark)
 
-analyze_extension <- function(sigma = 1/100, plot_name = "Plots/temp.png") {
+analyze_extension <- function(sigma = 1/100, plot_name = "Plots/temp.png", comparison = c("male_catchup75", "no_male_catchup75")) {
     
     agevec <- c(12, 13, seq(14, 38, by = 2), c(40, 45, 50, 55, 60))
     parms <- all_parameters(agevec, sigma = sigma) # middle scenario from Choi 2010
@@ -17,11 +17,20 @@ analyze_extension <- function(sigma = 1/100, plot_name = "Plots/temp.png") {
     
     define_journal_article_vaccination_strategies(agevec)
     
+    comparison <- match.arg(comparison)
+    if (comparison == "male_catchup75"){
+        vacc_strat_base <- JAstratG_base
+        vacc_strat_comp <- JAstratG_comp
+    } else if (comparison == "no_male_catchup75") {
+        vacc_strat_base <- JAstratH_base
+        vacc_strat_comp <- JAstratH_comp
+    }
+    
     #' base case: female vaccination, with catchup to 26
-    prev_base_case <- list("emp" = estimate_steady_state(parms, "pref", vacc_strategy = JAstratG_base),
-                           "ap" = estimate_steady_state(parms, "fact", vacc_strategy = JAstratG_base))
-    prev_extra_catch <- list("emp" = estimate_steady_state(parms, "pref", vacc_strategy = JAstratG_comp),
-                             "ap" = estimate_steady_state(parms, "fact", vacc_strategy = JAstratG_comp))
+    prev_base_case <- list("emp" = estimate_steady_state(parms, "pref", vacc_strategy = vacc_strat_base),
+                           "ap" = estimate_steady_state(parms, "fact", vacc_strategy = vacc_strat_base))
+    prev_extra_catch <- list("emp" = estimate_steady_state(parms, "pref", vacc_strategy = vacc_strat_comp),
+                             "ap" = estimate_steady_state(parms, "fact", vacc_strategy = vacc_strat_comp))
     
     #' make data frame for plotting
     relred_extra_catch <- c(
@@ -68,14 +77,30 @@ analyze_extension <- function(sigma = 1/100, plot_name = "Plots/temp.png") {
         theme_bw(base_size = 14) +
         facet_grid(.~Sex) +
         scale_x_continuous(breaks = seq(10, 60, by = 5)) +
-        labs(y = expression(APRAV[list(s, a)]),
+        scale_y_continuous(limits = c(0, 15)) + 
+        labs(y = expression(R[list(k, s, a)]),
              title =
-                 paste("Catch-up Vaccination of 26-40 y/o Females\nsigma = ", sigma))
+                 paste("Catch-up Vaccination of 26-40 y/o Females\n1/sigma = ", 1/sigma, " years", 
+                       sep = ""))
     ggsave(plot_name)
     
     return(benefit_ratio)
 }
 
-benefit_ratio_100yr <- analyze_extension(sigma = 1/100, plot_name = "Plots/100yr_vacc.png")
-benefit_ratio_10yr <- analyze_extension(sigma = 1/10, plot_name = "Plots/10yr_vacc.png")
+# with male catchup
+benefit_ratio_100yr <- analyze_extension(sigma = 1/100, 
+                                         plot_name = "Plots/100yr_vacc_Mcatch.png", 
+                                         "male_catchup75")
+benefit_ratio_10yr <- analyze_extension(sigma = 1/10, 
+                                        plot_name = "Plots/10yr_vacc_Mcatch.png", 
+                                        "male_catchup75")
+
+# without male catchup
+benefit_ratio_100yr_noMcatch <- analyze_extension(sigma = 1/100,
+                                                  plot_name = "Plots/100yr_vacc_noMcatch.png",
+                                                  "no_male_catchup75")
+benefit_ratio_10yr_noMcatch <- analyze_extension(sigma = 1/10,
+                                                 plot_name = "Plots/10yr_vacc_noMcatch.png",
+                                                 "no_male_catchup75")
+
 
