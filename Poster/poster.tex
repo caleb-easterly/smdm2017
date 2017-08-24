@@ -10,6 +10,10 @@
 \usepackage{graphicx}			% allows us to import images
 \graphicspath{ {/home/caleb/Link_to_HPV_Vaccination/HPV_Vaccine_Modeling/Waning_immunity/Plots/} }
 \usepackage[absolute,overlay]{textpos}
+\usepackage[style = alphabetic,
+	maxbibnames = 5]{biblatex}
+\addbibresource{hpv_bib_3_27.bib}
+
 %-----------------------------------------------------------
 % Define the column width and poster size
 % To set effective sepwid, onecolwid and twocolwid values, first choose how many columns you want and how much separation you want between columns
@@ -128,8 +132,7 @@ Where $\epsilon_A$ and $\epsilon_S$ denote the proportion of the population who 
 	
 	  \begin{block}{References}
 			  	\begin{tiny}
-				\bibliographystyle{abbrev}
-	           	\bibliography{hpv_bib_3_27}
+	           	\printbibliography
 	           	\end{tiny}
 	  \end{block}
 \end{column}
