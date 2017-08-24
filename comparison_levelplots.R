@@ -13,38 +13,19 @@ n_age <- length(grps)
 group_data <- all_parameters(grps)
 all_ind <- group_data$all_ind
 
-out <- data_matrix_longform(all_ind)
-Mdat <- out$MOME
-Fdat <- out$FOME
-Mcounts <- out$Mcounts
-Fcounts <- out$Fcounts
-
-# main Likelihood stuff is now in loglikes_varmod_comp.R
-# set up A-P mixing matrix
-M_APmat <- F_APmat <- matrix(0, nrow = n_age, ncol = n_age)
-rho_temp <- lambda_all(group_data$init_vec, group_data, 2, 0)
-rhoM_temp <- rho_temp$rhoM
-rhoF_temp <- rho_temp$rhoF
-j <- 1
-for (i in seq(3, n_age*3, by = 3)){
-  M_APmat[j, ] <- colSums(rhoM_temp[[i]])
-  F_APmat[j, ] <- colSums(rhoF_temp[[i]])
-  j <- j + 1
-}
-AP <- list(AP= list(m_AP = M_APmat, f_AP = F_APmat))
-
 # all distributions
 all_out <- pt_choice_all_choose_variance_model(all_ind, group_data$mean_ages,
                                                agevec = grps,
                                                variance_model = "sqrt")
-all_out <- append(all_out, AP)
+all_out <- append(all_out, list("AP_M" = group_data$AP_agemix_M, "AP_F" = group_data$AP_agemix_F))
 
 all_mat <- unlist(all_out, recursive = FALSE)
+
 
 # create data frame for plotting
 chsage <- (rep(rep(grps, n_age), 16))
 ptage <- (rep(rep(grps, each = n_age), 16))
-prob <- as.vector(c(Mdat, Fdat, unlist(all_mat))) # 22 matrices
+prob <- as.vector(c(group_data$Mdat, group_data$Fdat, unlist(all_mat))) # 22 matrices
 type_names <- c("Data","gamEmp", "gamConst", "lapEmp", "lapConst", "normEmp", "normConst", "A-P")
 type <- factor(rep(type_names, each = 2*n_age^2), levels = c("Data", "A-P", "gamEmp", "gamConst", "lapEmp", "lapConst", "normEmp", "normConst")) #two matrices, each with n_age^2 entries
 sex <- rep(rep(c("M", "F"), each = n_age^2), 8)
@@ -79,6 +60,6 @@ ggplot(df_normal_only) +
   coord_fixed() +
   labs(x="Chooser's Age", y = "Partner's Age") + 
   theme_bw(base_size = 14)
-ggsave("Plots/comparison_levelplots_normal_only.tiff")
+ggsave("Plots/comparison_levelplots_normal_only.png")
 
 
