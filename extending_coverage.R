@@ -9,7 +9,7 @@ library(rootSolve)
 library(beepr)
 library(microbenchmark)
 
-analyze_extension <- function(sigma = 1/100, plot_name = "Plots/temp.png", comparison = c("male_catchup75", "no_male_catchup75")) {
+analyze_extension <- function(sigma = 1/100, comparison = c("male_catchup75", "no_male_catchup75")) {
     
     agevec <- c(12, 13, seq(14, 38, by = 2), c(40, 45, 50, 55, 60))
     parms <- all_parameters(agevec, sigma = sigma) # middle scenario from Choi 2010
@@ -47,7 +47,10 @@ analyze_extension <- function(sigma = 1/100, plot_name = "Plots/temp.png", compa
                                         Sex = sex,
                                         Age = age,
                                         Mixing = mixing,
-                                        Vacc = coverage)
+                                        Vacc = coverage,
+                                        Comparison = comparison,
+                                        Sigma = paste("Sigma =", as.character(1/sigma), "years"))
+    
     
     older_ind <- which(agevec >= 40)
     avg_red_extra_catch_100yr_old <- with(parms, 
@@ -72,35 +75,39 @@ analyze_extension <- function(sigma = 1/100, plot_name = "Plots/temp.png", compa
     # estimate average benefit ratio for older 
     benefit_ratio <- avg_red_extra_catch_100yr_old['F_ap'] / avg_red_extra_catch_100yr_old['F_emp']
     
-    ggplot(subset(relred_extra_catch_df, Age >= 14)) +
-        geom_line(aes(x = Age, y = 100*relred_extra_catch, color = Mixing), size = 1.2) +
-        theme_bw(base_size = 14) +
-        facet_grid(.~Sex) +
-        scale_x_continuous(breaks = seq(10, 60, by = 5)) +
-        scale_y_continuous(limits = c(0, 15)) + 
-        labs(y = expression(R[list(k, s, a)]),
-             title =
-                 paste("Catch-up Vaccination of 26-40 y/o Females\n1/sigma = ", 1/sigma, " years", 
-                       sep = ""))
-    ggsave(plot_name)
-    
-    return(benefit_ratio)
+    return(list("benefit_ratio" = benefit_ratio, "df" = relred_extra_catch_df))
 }
 
 # with male catchup
-benefit_ratio_100yr <- analyze_extension(sigma = 1/100, 
-                                         plot_name = "Plots/100yr_vacc_Mcatch.png", 
+sigma100yr <- analyze_extension(sigma = 1/100,  
                                          "male_catchup75")
-benefit_ratio_10yr <- analyze_extension(sigma = 1/10, 
-                                        plot_name = "Plots/10yr_vacc_Mcatch.png", 
+sigma10yr <- analyze_extension(sigma = 1/10, 
                                         "male_catchup75")
 
 # without male catchup
-benefit_ratio_100yr_noMcatch <- analyze_extension(sigma = 1/100,
-                                                  plot_name = "Plots/100yr_vacc_noMcatch.png",
+sigma100yr_noMcatch <- analyze_extension(sigma = 1/100,
                                                   "no_male_catchup75")
-benefit_ratio_10yr_noMcatch <- analyze_extension(sigma = 1/10,
-                                                 plot_name = "Plots/10yr_vacc_noMcatch.png",
+sigma10yr_noMcatch <- analyze_extension(sigma = 1/10,
                                                  "no_male_catchup75")
 
+benefit_ratios <- c("sigma100yr" = sigma100yr$benefit_ratio, 
+                    "sigma10yr" = sigma10yr$benefit_ratio,
+                    "sigma100yr_noMcatch" = sigma100yr_noMcatch$benefit_ratio,
+                    "sigma10yr_noMcatch" = sigma100yr_noMcatch$benefit_ratio)
 
+dfs <- rbind(sigma100yr$df, 
+             sigma10yr$df,
+             sigma100yr_noMcatch$df,
+             sigma10yr_noMcatch$df)
+
+ggplot(subset(dfs, Age >= 14)) +
+    geom_line(aes(x = Age,
+                  y = 100*relred_extra_catch,
+                  color = Mixing,
+                  linetype = Comparison), size = 1.2) +
+    theme_bw(base_size = 14) +
+    facet_grid(Sigma~Sex) +
+    scale_x_continuous(breaks = seq(10, 60, by = 5)) +
+    scale_y_continuous(limits = c(0, 15)) + 
+    labs(y = expression(R[list(k, s, a)]))
+ggsave("Plots/relative_reduction_extending_coverage.png")
