@@ -6,14 +6,33 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass[final]{beamer}
-\usepackage[size = custom, width = 107, height = 107]{beamerposter}
+\usepackage[size = custom, width = 142, height = 91, scale=1.1]{beamerposter}
 \usepackage{graphicx}			% allows us to import images
-\graphicspath{ {/home/caleb/Link_to_HPV_Vaccination/HPV_Vaccine_Modeling/Waning_immunity/Plots/} }
+\graphicspath{ {/home/caleb/Link_to_HPV_Projects/smdm2017/Plots/} {C:/Users/caleb/HPV_Projects/smdm2017/Plots/}}
 \usepackage[absolute,overlay]{textpos}
 \usepackage[style = alphabetic,
+    doi=false,
+    isbn=false,
+    url=false,
 	maxbibnames = 5]{biblatex}
 \addbibresource{hpv_bib_3_27.bib}
+% remove notes: from http://tex.stackexchange.com/questions/208441/suppress-the-note-field-using-biblatex
+\AtEveryBibitem{%
+  \clearfield{note}%
+}
 
+\usepackage{setspace}
+\singlespacing
+
+% keep small bullets the same size
+\setbeamerfont{itemize/enumerate subbody}{size = \large}
+
+% for wrapping figures
+\usepackage{wrapfig}
+
+% use package csvsimple to read reduction table
+\usepackage{csvsimple}
+\usepackage{booktabs}
 %-----------------------------------------------------------
 % Define the column width and poster size
 % To set effective sepwid, onecolwid and twocolwid values, first choose how many columns you want and how much separation you want between columns
@@ -26,8 +45,8 @@
 \newlength{\onecolwid}
 \newlength{\twocolwid}
 \newlength{\threecolwid}
-\setlength{\paperwidth}{106.68 cm}
-\setlength{\paperheight}{106.68 cm}
+\setlength{\paperwidth}{142.24 cm}
+\setlength{\paperheight}{91.44 cm}
 \setlength{\sepwid}{0.024\paperwidth}
 \setlength{\onecolwid}{0.3\paperwidth}
 \setlength{\twocolwid}{0.625\paperwidth}
@@ -48,7 +67,7 @@
 %-----------------------------------------------------------
 
 \usecaptiontemplate{
-\small
+\large
 \structure{\insertcaptionname~\insertcaptionnumber:}
 \insertcaption}
 
@@ -60,174 +79,237 @@
 \setbeamercolor{block body}{fg=black,bg=white}
 \setbeamercolor{block alerted title}{fg=white,bg=dblue!70}
 \setbeamercolor{block alerted body}{fg=black,bg=dblue!10}
+\setbeamercolor{block example title}{fg=white,bg=dgreen!70}
+\setbeamercolor{block example body}{fg=black,bg=dgreen!10}
+
+
+
+\makeatletter
+%% Define a HUGE
+\newcommand\HUGE{\@setfontsize\Huge{90}{80}}
+
+\csvset{
+  autotabularcenter/.style={
+    file=#1,
+    after head=\csv@pretable\begin{tabular}{|*{\csv@columncount}{c|}}\csv@tablehead,
+    table head=\hline\csvlinetotablerow\\\hline,
+    late after line=\\,
+    table foot=\\\hline,
+    late after last line=\csv@tablefoot\end{tabular}\csv@posttable,
+    command=\csvlinetotablerow},
+  autobooktabularcenter/.style={
+    file=#1,
+    after head=\csv@pretable\begin{tabular}{*{\csv@columncount}{c}}\csv@tablehead,
+    table head=\csvlinetotablerow\\\midrule\midrule,
+    late after line=\\,
+    table foot=\\\bottomrule,
+    late after last line=\csv@tablefoot\end{tabular}\csv@posttable,
+    command=\csvlinetotablerow},
+}
+\makeatother
+\newcommand{\csvautotabularcenter}[2][]{\csvloop{autotabularcenter={#2},#1}}
+\newcommand{\csvautobooktabularcenter}[2][]{\csvloop{autobooktabularcenter={#2},#1}}
+
+
 
 %-----------------------------------------------------------
 % Name and authors of poster/paper/research
 %-----------------------------------------------------------
 
-\title{Sex Partner Choice and Age Mixing Bias in \\ Mathematical Models of Human Papillomavirus}
-\author{Caleb Easterly$^1$, Fernando Alarid-Escudero$^2$, MS, Eva Enns$^2$, PhD., \& Shalini Kulasingam$^2$, PhD.}
-\institute{ $^1$Macalester College, $^2$ University of Minnesota}
+\title{\HUGE{The Impact of Sexual Mixing By Age on Sexually Transmitted Infection Models}}
+\author{Caleb Easterly, B.A., Fernando Alarid-Escudero, M.S., PhD., Eva Enns, PhD., \& Shalini Kulasingam, PhD.}
+\institute{University of Minnesota}
 
 %-----------------------------------------------------------
 % Start the poster itself
 %-----------------------------------------------------------
 
 \begin{document}
-		
-		\addtobeamertemplate{headline}{} 
-		{\begin{tikzpicture}[remember picture, overlay]
-			\node [anchor=north east, inner sep=1cm]  at (current page.north east)
-			{\includegraphics[height=8cm]{maclogo}};
-			\end{tikzpicture}}
-		
+
+		\addtobeamertemplate{headline}{}
+
 \begin{frame}[t]
   \begin{columns}[t]	% the [t] option aligns the column's content at the top
     \begin{column}{\sepwid}\end{column}			% empty spacer column
-\begin{column}{\onecolwid}
-      \begin{block}{Introduction}
-        Mathematical models of HPV disease dynamics are popular methods of evaluating vaccination strategies, and were used to inform the vaccination policy recommendations of Gardasil \cite{elbasha_model_2007}, for example. A key feature of many models is their description of sexual behavior; that is, how a person with certain characteristics chooses their partners. 
+    \begin{column}{1.1\onecolwid}
+      \begin{block}{\textcolor{Black}{\Large{Background}}}
+        \begin{itemize}
+          \item Mathematical models of sexually transmitted infection (STI) dynamics are commonly used to evaluate interventions.
+              For example, recently used to inform HPV vaccination policy recommendations.
+          \item In STI models, a commonly used representation of sexual partner choice is the
+            \textbf{assortative-proportionate (A-P) mixing structure}:
+            \begin{itemize}
+            	\item a single parameter defines the spectrum from assortative (only mixing with one's own subgroup) to proportionate (choosing a partner solely based on the proportion of the population in each subgroup and the number of partnerships they offer).
+            \end{itemize}
+          \item Problems with A-P: not flexible enough to capture age mixing patterns
+          \item We propose \textbf{empirical mixing}: use standard statistical methods to define probability distributions for mixing behavior.
+        \end{itemize}
       \end{block}
+
       \vskip2ex
-      \begin{block}{The Assortative-Proportionate Paradigm}
-        In a model that does not stratify by age or sexual activity, the total population of potential partners is just the proportion of the opposite sex. However, many models stratify the population by age and sexual activity, to allow for the input of data specific to each subgroup \cite{elbasha_model_2007, hughes_theoretical_2002}. Once the group-specific data are defined, many models make the allowance for a mix of assortative and proportionate sexual mixing \cite{elbasha_model_2007, hughes_theoretical_2002}. \newline
-        \textbf{Assortative Mixing}: persons in a specific subgroup of the population (for example, a specific age and sexual activity) only mix with opposite sex members of that subgroup. \newline
-        \textbf{Proportionate Mixing}: chooser has no preference for any subgroup and chooses a partner solely based on the proportions of the population in each subgroup and the number of partnerships they offer. 
-       
 
-      \end{block}
+      \begin{alertblock}{Objectives}
+        \begin{itemize}
+          \item Compare fit of A-P and empirical age mixing structures to survey data.
+          \item Quantify effects of different mixing structures on model-predicted HPV vaccine benefits.
+        \end{itemize}
+      \end{alertblock}
+
       \vskip2ex
-      \begin{alertblock}{A-P Mixture Model}
-          The following is a common model for representing sexual mixing for one demographic characteristic, where $p$ is the group of the partner and $c$ is the group of the chooser:
-        \begin{equation} \label{hughesprob}
-P_{G_p | G_c} (p | c) = 
-\begin{cases}
-\epsilon + (1 - \epsilon) \frac{c_p N_p}{\sum_{\sigma} c_\sigma N_\sigma}, &\text{if} \ p = c \\
-\\
-(1 - \epsilon) \frac{c_p N_p}{\sum_{\sigma} c_{\sigma} N_{\sigma}}, \ &\text{otherwise} \\
-\end{cases}
-        \end{equation}
-        The parameter $\epsilon$ is the proportion of people who are completely assortative, while $c_i$ is the number of sexual partners of group $i$ and $N_i$ is the proportion of the population in group $i$. \newline
-        For sexual activity and age groups, the sexual mixing matrix used in models such as \cite{walker_revision_2012} is the following:
-        
-        \begin{equation} \label{nonpref}
-\begin{split}
-\hat{\rho}_{klmsj} &= \epsilon_A \epsilon_S \delta_{ls} \delta_{mj} \\
-&\qquad + \epsilon_A ( 1 - \epsilon_S) \frac{ c_{k'sj} N_{k'sj}}{\sum_{\sigma = 1}^{n_S} c_{\sigma j}  N_{k' \sigma j}} \delta_{mj} \\ 
-&\qquad + (1 - \epsilon_A)\epsilon_S \frac{ c_{k'sj} N_{k' s j} }{\sum_{\alpha = 1}^{n_A} c_{k' s \alpha} N_{k' s \alpha}} \delta_{ls} \\
-&\qquad + (1 - \epsilon_A) (1 - \epsilon_S) \frac{ c_{k' s j} N_{k' s j}}{\sum_{\alpha = 1}^{n_A} \sum_{\sigma = 1}^{n_S} c_{k' \sigma \alpha} N_{k' \sigma \alpha}} \\
-\end{split}
-\end{equation}
-Where $\epsilon_A$ and $\epsilon_S$ denote the proportion of the population who is assortative by age and sexual activity, respectively. 
 
-\end{alertblock}
-     \vskip2ex
-    \begin{block}{Criticisms of The A-P Paradigm}
-    \begin{itemize}
-    \item Difficult to interpret. 
-    \item Can not be made to fit empirical data easily. 
-    \item Computationally expensive. 
-    \end{itemize}
-    \end{block}
-	
-	  \begin{block}{References}
-			  	\begin{tiny}
-	           	\printbibliography
-	           	\end{tiny}
-	  \end{block}
-\end{column}
-
-    \begin{column}{\sepwid}\end{column}			% empty spacer column
-    
-    \begin{column}{\onecolwid} % Begin a column which is two columns wide (column 2)
-      \begin{block}{NATSAL-3 Data Analysis}
-      	
-        The British population probability survey National Survey on Sexual Attitudes and Lifestyles has a wide variety of detailed sexual behavior data \cite{johnson_national_2015}. For this analysis, we use two types of response data:
-        \begin{enumerate}
-        	\item Age preference data, based on respondents' most recent sexual partners (up to 3). 
-        	\item Sex partner acquisition rate (SPAR), based on the respondents' number of new sexual partners in the past year. 
-	    \end{enumerate}
-        The analysis focuses exclusively on heterosexual respondents, but the next planned phase of the project is to analyze the patterns of all respondents. 
-     \end{block}
-     \vskip2ex
-        \setbeamercolor{block title}{fg=red,bg=white}%frame color
-        \begin{block}{Age Preference Data}
-        	We model the age preference data as a collection of Gamma distributions - one for each age group - using the method in \cite{greene_econometric_2003} to analyze heteroscedasticity. The process is as below:
-        	\begin{enumerate}
-        		\item Perform a linear regression on chooser's age versus age of partner. 
-        		\item Model the squared residuals as a log-linear function of chooser's age, and predict variance with this model.
-        		\item Take the mean age of each age group and use that to find the average mean and average variance for that age group.
-        		\item Use method of moments (MoM) on the mean and variance of each age group. Assume the probability of partner's age, $P_p ~ \text{Gamma}(\alpha_i, \beta_i)$, where $\alpha_i$ and $\beta_i$ are the shape and rate parameters of the Gamma distribution for age group $i$, which has estimated mean partner age $\hat{\mu}_i$ and variance $\hat{\sigma}_i^2$. Then 
-        		\begin{align*}
-        		\hat{\beta}_i &= \frac{\hat{\mu}_i}{\hat{\sigma}_i^2} \\
-        		\\
-        		\hat{\alpha}_i &= \frac{\hat{\mu}_i^2}{\hat{\sigma}_i^2}
-        		\end{align*}
-	        \end{enumerate}
-        		\begin{figure}
-        		\includegraphics[width = \textwidth]{dist_p_ages}
-        		\caption{Regression of Mean and Variance by Age. 95\% Confidence Intervals are for a Gamma distribution}
-        		\end{figure}
-        \end{block}
-        \vskip2ex
-        
-        \setbeamercolor{block title}{fg=red,bg=white}%frame color
-        \begin{block}{SPAR Analysis}
-        	\begin{itemize}
-        	\item We model the SPAR data as a Poisson regression by age. 
-        	\item In addition, we follow \cite{hughes_theoretical_2002} in assuming that the proportion of the population in the high, medium, and low sexual activity groups are 0.03, 0.15, and 0.82, respectively. 
+      \begin{block}{\textcolor{Black}{\Large{Methods}}}
+      	\begin{itemize}
+      	  \item We analyzed the British population probability survey National Survey on Sexual Attitudes and Lifestyles (Johnson, et al. 2015)
+      	  	\begin{itemize}
+      	  		\item We used heterosexual age preference data, based on respondents' most recent sexual partners (up to 3).
         	\end{itemize}
-        	
-        	\begin{figure}
-        		\includegraphics[width = \textwidth]{spar_mf}
-        		\caption{Male SPAR's are generally much higher than those of females. The plots display high variability. }
-        	\end{figure}
-        \end{block}	
+        \end{itemize}
+      \end{block}
+      \vskip2ex
 
+      \begin{block}{Assortative-Proportionate Versus Empirical Mixing}
+        \textbf{Age Mixing Estimation: A-P}
+            \begin{itemize}
+                \item Use maximum likelihood estimation to find optimal degree of assortativeness.
+            \end{itemize}
+        \textbf{Age Mixing Estimation: Empirical}
+            \begin{itemize}
+                \item Model the age preference data as a collection of probability distributions - one for each age group
+                \item Partner age is heteroscedastic with respect to chooser age.
+                \item Model variance:
+            \begin{enumerate}
+                \item Linear regression of chooser's age versus age of partner, predict mean partner age for each age group.
+        	   \item Model the squared residuals (and assorted transformations) as linear functions of chooser's age, and predict variance.
+	        \end{enumerate}
+            \end{itemize}
 
+        \textbf{Likelihood Comparison}
+
+        Calculate likelihood of Natsal-3 age mixing data under:
+        \begin{itemize}
+          \item A-P mixing
+          \item Empirical mixing, with:
+            \begin{itemize}
+                \item Linear: variance $\sim$ chooser age
+                \item Square Root: $\sqrt{\text{variance}} \sim$ chooser age
+                \item Log: $\log(\text{variance}) \sim$ chooser age
+                \item Constant: variance = $\hat{\sigma}^2$
+            \end{itemize}
+        \end{itemize}
+      \end{block}
+      \vskip2ex
+       \begin{block}{Mathematical Model of HPV}
+       \begin{column}{0.5\onecolwid}
+        \begin{itemize}
+        \item Age- and sexual-activity-structured compartmental model
+        \item Assume life-long vaccine protection.
+        \item Model diagram on right, with age and sexual activity omitted for clarity.
+        \end{itemize}
+        \end{column}
+        \begin{column}{0.6\onecolwid}
+            \begin{figure}
+                \includegraphics[trim={0 0 0 3cm}, clip,width=0.9\textwidth]{flow_diagram}
+            \end{figure}
+            \end{column}
+
+      \end{block}
+    \end{column}
+    \begin{column}{\sepwid}\end{column}			% empty spacer column
+
+    \begin{column}{0.9\onecolwid}
+        \begin{block}{\textcolor{Black}{\Large{Results: Age Mixing Structures}}}
+        		\begin{figure}
+        		\includegraphics[width = \textwidth]{comparison_levelplots_normal_only}
+        		\caption{From left to right: the A-P structure,
+                    a regression model with Laplace distributed errors and
+                    variance as a linear function of age, and the Natsal data. Note the constant probabilities
+                    in rows of the A-P structure.}\label{fig:1}
+        		\end{figure}
+    \begin{figure}
+        \includegraphics[width=0.8\textwidth]{comparison_age50}
+        \caption{The partner age distributions for 50-year-old male and females.}
+    \end{figure}
+        \end{block}
+      \vskip2ex
+      \begin{block}{\textcolor{Black}{\Large{Results: Likelihood Comparison}}}
+            \begin{figure}
+                \includegraphics[width=\textwidth]{negLogLikelihoodAll}
+                \caption{Likelihood of Natsal age mixing data under different mixing assumptions.
+                The dotted blue line is the likelihood under A-P}\label{fig:2}
+            \end{figure}
+        \end{block}
 \end{column}
 
 \begin{column}{\sepwid}\end{column}
 
 \begin{column}{\onecolwid}
-	\begin{alertblock}{Preferential Mixing}
-		We define $\Omega$ to be the age preference matrix derived from the Gamma distributions, and $S$ to be the sexual activity preference matrix. Then, the partnerships offered from group $sj$ to $lm$ is $\Omega_{k'jm} S_{k'sl} c_{k'sj} N_{k'sj}$. The new mixing matrix, the probability of group $lm$ mixing with group $sj$, is 
-		\begin{equation} \label{final-mat}
-		\begin{split}
-		& P_{\{S_p, A_p | S_c, A_c \}}(s, j |\ l, m) = 
-		\rho_{klmsj}  \\ 
-		\\
-		&= \frac{S_{k'sl} \Omega_{k'jm} c_{k'sj} N_{k'sj}}{\sum_{\alpha = 1}^{n_A} \sum_{\sigma = 1}^{n_S} S_{k' \sigma l} \Omega_{k' \alpha m} c_{k' \sigma \alpha} N_{k' \sigma \alpha}},
-		\end{split}
-		\end{equation}
-		The differences in the matrix are fairly large, as shown in the below figures.
-	\end{alertblock}
-	
-	\vskip2ex
-	
-	\begin{block}{Differences in Mixing}
-		\begin{figure} \label{pref}
-			\includegraphics[width = 0.7\textwidth]{gam_age_mixing}
-			\caption{Preferential age mixing based on the empirical survey data in Natsal-3 \cite{johnson_national_2015}. The probability of mixing falls off quickly as the potential partners' ages get farther from the chooser.}
-		\end{figure} 
-		\begin{figure} 	\label{nonpref_probs}
-			\includegraphics[width = 0.7\textwidth]{nonpref_probs}
-			\caption{Age mixing based on a factored matrix (equation (\ref{nonpref})). For most values of $\epsilon$ there is a relatively high probability of mixing at even distant ages, while very high values of $\epsilon$ preclude mixing at close ages.}
-		\end{figure}
-	\end{block}
-	
-	\begin{block}{Pre-Vaccination Prevalence \\ of Oncogenic HPV Types}
-		The goal of any model is to reproduce observed data. To accomplish that, we calibrate the model by minimizing the squared difference between the endemic steady-state of the model and the observed prevalence curves:
-		\begin{figure}
-			\includegraphics{prev_plot}
-			\caption{Calculated with exponentially-damped polynomials with data from \cite{wheeler_population-based_2013} for women and \cite{ingles_analysis_2015} for men. Error bounds calculated with Markov Chain Monte Carlo error propagation. This is used as target data in the HPV calibration}.
-		\end{figure}
-	\end{block}
-	
-	  
-	\begin{block}{Acknowledgements}
-		This work was supported by the Howard Hughes Medical Institute Off-Campus Data Scientist Fellowship. Many thanks to HHMI and to Shalini, Fernando, and Eva. 		
-	\end{block}
+      \begin{block}{\textcolor{Black}{\Large{Results: Extending
+                Vaccination to 26-39-year-old Females}}}
+            \begin{figure}
+            \includegraphics[width=0.8\textwidth]{relative_reduction_extending_coverage}
+                \caption{Relative reduction in prevalence due to extending vaccination, by sex, age, and male catch-up scenario.}\label{fig:3}
+            \end{figure}
+      \end{block}
+      \vskip2ex
+    \begin{block}{Summary Measures}
+        \begin{center}
+            \begin{table}
+                   \caption{Ratio of percentage reduction in
+                    prevalence predicted by A-P model to that predicted by empirical model.
+                   }
+                \csvautobooktabularcenter{reduction_table.csv}
+            \end{table}
+        \end{center}
+        \begin{itemize}
+            \item The A-P model
+                predicts a reduction in prevalence \textbf{7 times greater} (young males) and \textbf{5 times greater} (young females)
+                than empirical model prediction.
+            \item A-P model predicts slightly more than one
+                half of the reduction for older males, and slightly
+                less than 3/4 of the benefit for older females.
+        \end{itemize}
+    \end{block}
+    \vskip2ex
+    \begin{alertblock}{Conclusions}
+        \begin{itemize}
+            \item Standard regression models fit Natsal-3 age mixing data
+                better than the A-P mixing structure.
+            \item The A-P mixing structure overestimates the
+                sexual connection between those above and below 30.
+            \item The choice of mixing structure impacts model-estimated vaccine benefits.
+            \item A model with an A-P mixing structure:
+                \begin{itemize}
+                    \item Overestimates reduction in HPV prevalence for younger individuals
+                    \item Understimates reduction in prevalence for older individuals
+                \end{itemize}
+        \end{itemize}
+    \end{alertblock}
+%    \begin{block}{Limitations}
+%        \begin{itemize}
+%            \item Model was relatively simple.
+%            \item We only consider heterosexual partnerships (like most HPV models).
+%            \item Only use one survey to compare goodness of fit.
+%        \end{itemize}
+%    \end{block}
+\vskip2ex
+    \begin{block}{Future Directions}
+        \begin{itemize}
+            \item Analyze other sexual behavior surveys
+                (National Survey of Family Growth, etc.) and compare results.
+            \item Extend HPV  model to include cervical cancer and other outcomes, for cost-effectiveness analysis.
+            \item Calibrate model to HPV prevalence and incidence
+                and examine degree to which calibration corrects for mixing structure differences.
+            \item Develop empirical mixing estimates for non-heterosexual sexual mixing.
+        \end{itemize}
+    \end{block}
+%    \begin{block}{Acknowledgements}
+%		This work was supported by the Howard Hughes Medical Institute Off-Campus Data Scientist Fellowship.
+%	\end{block}
+%    \begin{block}{References}
+%	  \begin{footnotesize}
+%	  \printbibliography
+%	  \end{footnotesize}
+%	\end{block}
 \end{column}
 \begin{column}{\sepwid}\end{column}			% empty spacer column
 

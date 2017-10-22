@@ -158,6 +158,7 @@
 \setbeamerfont{frametitle}{series=\bfseries}
 \setbeamerfont{frametitle}{size=\Large}
 \setbeamerfont{block body}{series=\rmfamily}
+\setbeamerfont{block body}{size=\large}
 
 % set some beamer theme options
 \setbeamertemplate{title page}[default][colsep=-4bp,rounded=true]
@@ -191,22 +192,18 @@
     \usebeamercolor{title in headline}{\color{jblue}\Huge{\textbf{\inserttitle}}\\[0.5ex]}
     \usebeamercolor{author in headline}{\color{fg}\Large{\insertauthor}\\[1ex]}
     \usebeamercolor{institute in headline}{\color{fg}\large{\insertinstitute}\\[1ex]}
-    \vskip1cm
    \end{column}
-   \vspace{1cm}
   \end{columns}
- \vspace{0.5in}
- \hspace{0.5in}\begin{beamercolorbox}[wd=47in,colsep=0.15cm]{cboxb}\end{beamercolorbox}
- \vspace{0.1in}
+  \vskip2ex
+ \hspace{0.5in}\begin{beamercolorbox}[wd=55in,colsep=0.15cm]{cboxb}\end{beamercolorbox}
 }
 
 % Block definition
 \setbeamertemplate{block begin}
 {
-  \par\vskip\medskipamount
   \begin{beamercolorbox}[colsep*=0ex,dp={2ex},center]{block title}
     \vskip-0.25cm
-    \usebeamerfont{block title}\large\insertblocktitle
+    \usebeamerfont{block title}\Large\insertblocktitle
     \begin{flushleft}
     \vskip-1cm
     \begin{tikzpicture}[remember picture,overlay]
@@ -256,6 +253,38 @@
 }
 
 \setbeamertemplate{block alerted end}
+{
+  \end{minipage}
+  \end{center}
+  \end{beamercolorbox}
+  \end{beamercolorbox}
+  \vskip\smallskipamount
+}
+% Example block definition (with frame)
+\setbeamertemplate{block example begin}
+{
+  \par\vskip\medskipamount
+  \begin{beamercolorbox}[sep=0ex,rounded=true,center,dp={2ex}]{block example title}
+    \vskip0.01cm
+    \usebeamerfont{block title}\large\insertblocktitle
+  \end{beamercolorbox}
+  {\parskip0pt\par}
+  \usebeamerfont{block body}
+  \vskip-0.8cm
+  \begin{beamercolorbox}[sep=0.5cm, rounded=true,center]{block example title}
+  \setlength{\inboxwd}{\linewidth}
+  \addtolength{\inboxwd}{-1cm}
+  \begin{beamercolorbox}[rounded=true,wd={\inboxwd},center]{block example body}
+  \setlength{\iinboxwd}{\inboxwd}
+  \setlength{\inboxrule}{\inboxwd}
+  \addtolength{\iinboxwd}{-0.5cm}
+  \addtolength{\inboxrule}{0.5cm}
+  \begin{center}
+  \begin{minipage}{\iinboxwd}
+  \justifying
+}
+
+\setbeamertemplate{block example end}
 {
   \end{minipage}
   \end{center}

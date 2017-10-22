@@ -3,34 +3,27 @@
 # age groups
 library(sfceHPV)
 library(ggplot2)
-library(extraDistr)
-library(deSolve)
-library(rootSolve)
-library(beepr)
-library(microbenchmark)
 
 analyze_extension <- function(sigma = 1/100, comparison = c("male_catchup75", "no_male_catchup75")) {
     
-    agevec <- c(12, 13, seq(14, 38, by = 2), c(40, 45, 50, 55, 60))
-    parms <- all_parameters(agevec, sigma = sigma) # middle scenario from Choi 2010
+    agevec <- c(12, 13, seq(14, 60, by = 2))
+    parms <- all_parameters(agevec, sigma = sigma, variance_model = "linear") # middle scenario from Choi 2010
     init_vec <- parms$init_vec
-    
-    define_journal_article_vaccination_strategies(agevec)
-    
+    age_prop <- parms$age_prop
     comparison <- match.arg(comparison)
     if (comparison == "male_catchup75"){
-        vacc_strat_base <- JAstratG_base
-        vacc_strat_comp <- JAstratG_comp
+        vacc_strat_base <- parms$JAstratG_base
+        vacc_strat_comp <- parms$JAstratG_comp
     } else if (comparison == "no_male_catchup75") {
-        vacc_strat_base <- JAstratH_base
-        vacc_strat_comp <- JAstratH_comp
+        vacc_strat_base <- parms$JAstratH_base
+        vacc_strat_comp <- parms$JAstratH_comp
     }
     
     #' base case: female vaccination, with catchup to 26
-    prev_base_case <- list("emp" = estimate_steady_state(parms, "pref", vacc_strategy = vacc_strat_base),
-                           "ap" = estimate_steady_state(parms, "fact", vacc_strategy = vacc_strat_base))
-    prev_extra_catch <- list("emp" = estimate_steady_state(parms, "pref", vacc_strategy = vacc_strat_comp),
-                             "ap" = estimate_steady_state(parms, "fact", vacc_strategy = vacc_strat_comp))
+    prev_base_case <- list("emp" = estimate_steady_state(parms, "emp", vacc_strategy = vacc_strat_base),
+                           "ap" = estimate_steady_state(parms, "ap", vacc_strategy = vacc_strat_base))
+    prev_extra_catch <- list("emp" = estimate_steady_state(parms, "emp", vacc_strategy = vacc_strat_comp),
+                             "ap" = estimate_steady_state(parms, "ap", vacc_strategy = vacc_strat_comp))
     
     #' make data frame for plotting
     relred_extra_catch <- c(
@@ -73,41 +66,72 @@ analyze_extension <- function(sigma = 1/100, comparison = c("male_catchup75", "n
                                           )
     )
     # estimate average benefit ratio for older 
-    benefit_ratio <- avg_red_extra_catch_100yr_old['F_ap'] / avg_red_extra_catch_100yr_old['F_emp']
+              
     
-    return(list("benefit_ratio" = benefit_ratio, "df" = relred_extra_catch_df))
+    younger_ind <- which(agevec <= 25 & agevec >= 14)
+    avg_red_extra_catch_100yr_young <- with(parms, 
+                                          c("M_ap" = t(age_prop[younger_ind]) %*% 
+                                              subset(relred_extra_catch_df, mixing == "A-P" &
+                                                       sex == "M" & Age <= 25 & Age >= 14)$relred_extra_catch / 
+                                              sum(age_prop[younger_ind]),
+                                            "F_ap" = t(age_prop[younger_ind]) %*% 
+                                              subset(relred_extra_catch_df, mixing == "A-P" &
+                                                       sex == "F" & Age <= 25 & Age >= 14)$relred_extra_catch / 
+                                              sum(age_prop[younger_ind]),
+                                            "M_emp" = t(age_prop[younger_ind]) %*% 
+                                              subset(relred_extra_catch_df, mixing == "Emp." &
+                                                       sex == "M" & Age <= 25 & Age >= 14)$relred_extra_catch / 
+                                              sum(age_prop[younger_ind]),
+                                            "F_emp" = t(age_prop[younger_ind]) %*% 
+                                              subset(relred_extra_catch_df, mixing == "Emp." &
+                                                       sex == "F" & Age <= 25 & Age >= 14)$relred_extra_catch / 
+                                              sum(age_prop[younger_ind])
+                                          )
+    )
+    # estimate average benefit ratio for older 
+    benefit_ratio_young <- c(avg_red_extra_catch_100yr_young['M_ap'] / avg_red_extra_catch_100yr_young['M_emp'],
+                             avg_red_extra_catch_100yr_young['F_ap'] / avg_red_extra_catch_100yr_young['F_emp'])
+    benefit_ratio_old <- c(avg_red_extra_catch_100yr_old['M_ap'] / avg_red_extra_catch_100yr_old['M_emp'],
+                           avg_red_extra_catch_100yr_old['F_ap'] / avg_red_extra_catch_100yr_old['F_emp'])
+    
+    benefit_ratios <- data.frame(
+      "Sex" = c("M", "F"),
+      "<=25" = benefit_ratio_young * 100, # convert to percent
+      ">40" = benefit_ratio_old * 100
+    )
+    colnames(benefit_ratios) <- c("Sex","<26 y/o", ">41 y/o ")
+    rownames(benefit_ratios) <- NULL
+    return(list("benefit_ratios" = benefit_ratios,
+                "df" = relred_extra_catch_df))
 }
 
 # with male catchup
 sigma100yr <- analyze_extension(sigma = 1/100,  
                                          "male_catchup75")
-sigma10yr <- analyze_extension(sigma = 1/10, 
-                                        "male_catchup75")
 
 # without male catchup
 sigma100yr_noMcatch <- analyze_extension(sigma = 1/100,
                                                   "no_male_catchup75")
-sigma10yr_noMcatch <- analyze_extension(sigma = 1/10,
-                                                 "no_male_catchup75")
 
-benefit_ratios <- c("sigma100yr" = sigma100yr$benefit_ratio, 
-                    "sigma10yr" = sigma10yr$benefit_ratio,
-                    "sigma100yr_noMcatch" = sigma100yr_noMcatch$benefit_ratio,
-                    "sigma10yr_noMcatch" = sigma100yr_noMcatch$benefit_ratio)
+benefit_ratios <- sigma100yr$benefit_ratios
+
+
+ # write to csv for using in poster
+write.csv(format(benefit_ratios, nsmall = 1, digits = 3),
+          file = "Poster/reduction_table.csv", quote = FALSE,
+          row.names = FALSE)
 
 dfs <- rbind(sigma100yr$df, 
-             sigma10yr$df,
-             sigma100yr_noMcatch$df,
-             sigma10yr_noMcatch$df)
-
+             sigma100yr_noMcatch$df)
+dfs$Comparison <- c("Male Catchup\n75% uptake", "No Male Catchup\n75% uptake")[as.numeric(dfs$Comparison)]
+    
 ggplot(subset(dfs, Age >= 14)) +
     geom_line(aes(x = Age,
                   y = 100*relred_extra_catch,
-                  color = Mixing,
-                  linetype = Comparison), size = 1.2) +
-    theme_bw(base_size = 14) +
-    facet_grid(Sigma~Sex) +
+                  color = Mixing), size = 1.2) +
+    theme_bw(base_size = 18) +
+    facet_grid(Comparison~Sex) +
     scale_x_continuous(breaks = seq(10, 60, by = 5)) +
     scale_y_continuous(limits = c(0, 15)) + 
-    labs(y = expression(R[list(k, s, a)]))
-ggsave("Plots/relative_reduction_extending_coverage.png")
+    labs(y = "Percent Reduction in Prevalence")
+ggsave("Plots/relative_reduction_extending_coverage.png", width = 10, height=6, units ="in")
